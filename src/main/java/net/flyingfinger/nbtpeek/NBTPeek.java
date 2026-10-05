@@ -45,10 +45,19 @@ public class NBTPeek implements ClientModInitializer {
 	private static final KeyMapping.Category CATEGORY =
 			KeyMapping.Category.register(Identifier.fromNamespaceAndPath(MOD_ID, "general"));
 
-	private static final KeyMapping COPY_KEY = key("copy", "key.keyboard.c");
-	private static final KeyMapping TOGGLE_KEY = key("toggle", "key.keyboard.unknown"); // unbound by default
-	private static final KeyMapping SCROLL_UP_KEY = key("scroll_up", "key.keyboard.up");
-	private static final KeyMapping SCROLL_DOWN_KEY = key("scroll_down", "key.keyboard.down");
+	// Minecraft 26.x (SDL input) stores a keybind's key as its SDL scancode — exactly
+	// how vanilla constructs its own binds, e.g. new KeyMapping("key.forward", 26, …).
+	// (Raw GLFW values like InputConstants.KEY_* are NOT scancodes and make vanilla's
+	// KeyMapping.setAll() -> InputConstants.isKeyDown() go out of bounds.)
+	private static final int SCANCODE_UNKNOWN = 0;
+	private static final int SCANCODE_C = 6;
+	private static final int SCANCODE_UP = 82;
+	private static final int SCANCODE_DOWN = 81;
+
+	private static final KeyMapping COPY_KEY = key("copy", SCANCODE_C);
+	private static final KeyMapping TOGGLE_KEY = key("toggle", SCANCODE_UNKNOWN); // unbound by default
+	private static final KeyMapping SCROLL_UP_KEY = key("scroll_up", SCANCODE_UP);
+	private static final KeyMapping SCROLL_DOWN_KEY = key("scroll_down", SCANCODE_DOWN);
 
 	/** The stack whose tooltip was drawn most recently — i.e. the one under the cursor. */
 	private static ItemStack lastHovered = ItemStack.EMPTY;
@@ -60,13 +69,9 @@ public class NBTPeek implements ClientModInitializer {
 	private static int copyCooldown = 0;   // ticks, debounces copy against key-repeat
 	private static int toggleCooldown = 0;
 
-	// Resolve the default key by its vanilla name (e.g. "key.keyboard.c"). On 26.x
-	// (SDL input) a KeyMapping's value must be a valid key as the game itself stores
-	// them; raw GLFW constants (InputConstants.KEY_*) are NOT valid scancodes and make
-	// vanilla's KeyMapping.setAll() -> InputConstants.isKeyDown() go out of bounds.
-	private static KeyMapping key(String name, String defaultKeyName) {
-		InputConstants.Key bound = InputConstants.getKey(defaultKeyName);
-		return new KeyMapping("key.nbtpeek." + name, InputConstants.Type.KEYBOARD, bound.getValue(), CATEGORY);
+	private static KeyMapping key(String name, int sdlScancode) {
+		// Same 3-arg constructor vanilla uses; the int is the SDL scancode.
+		return new KeyMapping("key.nbtpeek." + name, sdlScancode, CATEGORY);
 	}
 
 	@Override
