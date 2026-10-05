@@ -19,6 +19,18 @@ public final class NbtRenderer {
 	private NbtRenderer() {
 	}
 
+	/** Multi-line, indented plain-text form for the clipboard (no colour codes). */
+	public static String toPrettyString(CompoundTag tag) {
+		StringBuilder sb = new StringBuilder();
+		for (Component line : toLines(tag, Style.PLAIN)) {
+			if (sb.length() > 0) {
+				sb.append('\n');
+			}
+			sb.append(line.getString());
+		}
+		return sb.toString();
+	}
+
 	public static List<Component> toLines(CompoundTag tag, Style style) {
 		List<Component> out = new ArrayList<>();
 		if (style == Style.COMPACT) {

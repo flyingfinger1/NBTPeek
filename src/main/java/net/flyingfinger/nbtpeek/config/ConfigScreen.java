@@ -38,6 +38,13 @@ public class ConfigScreen implements ModMenuApi {
 					.setSaveConsumer(value -> cfg.style = value)
 					.build());
 
+			general.addEntry(eb.startEnumSelector(Component.translatable("nbtpeek.config.copyFormat"),
+							NbtPeekConfig.CopyFormat.class, cfg.copyFormat)
+					.setDefaultValue(NbtPeekConfig.CopyFormat.SNBT)
+					.setTooltip(Component.translatable("nbtpeek.config.copyFormat.tooltip"))
+					.setSaveConsumer(value -> cfg.copyFormat = value)
+					.build());
+
 			general.addEntry(eb.startBooleanToggle(Component.translatable("nbtpeek.config.hideLore"), cfg.hideLore)
 					.setDefaultValue(false)
 					.setSaveConsumer(value -> cfg.hideLore = value)

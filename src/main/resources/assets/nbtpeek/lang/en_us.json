@@ -17,6 +17,8 @@
   "nbtpeek.config.trigger.tooltip": "ADVANCED = with advanced tooltips (F3 + H), ALWAYS = always, HOLD_KEY = while the Show key is held, TOGGLE_KEY = toggled by the Show key.",
   "nbtpeek.config.style": "Display style",
   "nbtpeek.config.style.tooltip": "FRIENDLY = coloured & indented, PLAIN = indented, no colour, COMPACT = raw SNBT.",
+  "nbtpeek.config.copyFormat": "Copy format",
+  "nbtpeek.config.copyFormat.tooltip": "How the NBT is written to the clipboard: SNBT = one compact line (paste into /give …[…]), PRETTY = indented multi-line text.",
   "nbtpeek.config.hideLore": "Hide lore component",
   "nbtpeek.config.hideCustomName": "Hide custom name component",
   "nbtpeek.config.showHeader": "Show the 'NBT' header line",

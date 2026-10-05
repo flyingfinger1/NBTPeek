@@ -59,6 +59,9 @@ public final class ConfigManager {
 		if (config.style == null) {
 			config.style = NbtPeekConfig.Style.FRIENDLY;
 		}
+		if (config.copyFormat == null) {
+			config.copyFormat = NbtPeekConfig.CopyFormat.SNBT;
+		}
 		config.maxLines = Math.max(1, Math.min(200, config.maxLines));
 	}
 }

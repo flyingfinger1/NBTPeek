@@ -185,7 +185,10 @@ public class NBTPeek implements ClientModInitializer {
 			toast(mc, Component.translatable("nbtpeek.copied.empty"), name);
 			return;
 		}
-		mc.keyboardHandler.setClipboard(nbt.toString()); // compact SNBT, ready to paste into commands
+		String text = (ConfigManager.get().copyFormat == NbtPeekConfig.CopyFormat.PRETTY)
+				? NbtRenderer.toPrettyString(nbt)   // indented, multi-line
+				: nbt.toString();                   // compact SNBT, ready to paste into commands
+		mc.keyboardHandler.setClipboard(text);
 		toast(mc, Component.translatable("nbtpeek.copied"), name);
 	}
 
