@@ -9,12 +9,15 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.flyingfinger.nbtpeek.config.ConfigManager;
 import net.flyingfinger.nbtpeek.config.NbtPeekConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.SystemToast;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.nbt.CompoundTag;
@@ -29,6 +32,11 @@ import net.minecraft.world.item.TooltipFlag;
 /**
  * NBT Peek — shows an item's data components (its "NBT") in the tooltip and
  * copies them to the clipboard. Client-only, no mixins.
+ *
+ * <p>Key handling is event-based: copying/scrolling happen while a container
+ * screen is open, so keys are read through {@link ScreenKeyboardEvents} rather
+ * than polled. (Minecraft 26.x's SDL-backed {@code InputConstants.isKeyDown}
+ * indexes a scancode buffer and is not safe to poll with arbitrary key values.)
  */
 public class NBTPeek implements ClientModInitializer {
 
@@ -48,13 +56,9 @@ public class NBTPeek implements ClientModInitializer {
 	private static ItemStack scrolledStack = ItemStack.EMPTY;
 	private static int scroll = 0;
 
-	// Edge-detection / repeat state for polled keys.
-	private static boolean copyHeld;
-	private static boolean toggleHeld;
-	private static boolean scrollUpHeld;
-	private static boolean scrollDownHeld;
-	private static int scrollRepeat;
-	private static boolean toggledOn;
+	private static boolean toggledOn = false;
+	private static int copyCooldown = 0;   // ticks, debounces copy against key-repeat
+	private static int toggleCooldown = 0;
 
 	private static KeyMapping key(String name, int defaultCode) {
 		return new KeyMapping("key.nbtpeek." + name, InputConstants.Type.KEYBOARD, defaultCode, CATEGORY);
@@ -68,6 +72,9 @@ public class NBTPeek implements ClientModInitializer {
 		}
 		ItemTooltipCallback.EVENT.register(NBTPeek::onTooltip);
 		ClientTickEvents.END_CLIENT_TICK.register(NBTPeek::onEndTick);
+		// Keys while a screen (inventory/container) is open — the case we care about.
+		ScreenEvents.AFTER_INIT.register((client, screen, width, height) ->
+				ScreenKeyboardEvents.afterKeyPress(screen).register((s, keyEvent) -> onScreenKey(keyEvent)));
 	}
 
 	private static void onTooltip(ItemStack stack, Item.TooltipContext context, TooltipFlag flag, List<Component> lines) {
@@ -115,40 +122,43 @@ public class NBTPeek implements ClientModInitializer {
 		}
 	}
 
-	private static void onEndTick(Minecraft mc) {
-		boolean copy = isDown(COPY_KEY);
-		if (copy && !copyHeld && mc.player != null && !lastHovered.isEmpty()) {
-			copyToClipboard(mc, lastHovered); // the item whose tooltip is currently shown
+	/** Handles our keys while any screen is open (copy, scroll, toggle). */
+	private static void onScreenKey(KeyEvent event) {
+		InputConstants.Key pressed = InputConstants.getKey(event);
+		Minecraft mc = Minecraft.getInstance();
+		if (COPY_KEY.matches(pressed)) {
+			if (copyCooldown == 0 && mc.player != null && !lastHovered.isEmpty()) {
+				copyToClipboard(mc, lastHovered); // the item whose tooltip is currently shown
+				copyCooldown = 5;
+			}
+		} else if (SCROLL_UP_KEY.matches(pressed)) {
+			scroll = Math.max(0, scroll - 1);
+		} else if (SCROLL_DOWN_KEY.matches(pressed)) {
+			scroll += 1; // clamped against the line count in onTooltip
+		} else if (TOGGLE_KEY.matches(pressed) && toggleCooldown == 0) {
+			toggledOn = !toggledOn;
+			toggleCooldown = 5;
 		}
-		copyHeld = copy;
+	}
 
-		boolean toggle = isDown(TOGGLE_KEY);
-		if (toggle && !toggleHeld) {
+	private static void onEndTick(Minecraft mc) {
+		if (copyCooldown > 0) {
+			copyCooldown--;
+		}
+		if (toggleCooldown > 0) {
+			toggleCooldown--;
+		}
+		// In-world toggle (consumeClick only fires when no screen is open).
+		while (TOGGLE_KEY.consumeClick()) {
 			toggledOn = !toggledOn;
 		}
-		toggleHeld = toggle;
-
-		// Scroll: one line on a fresh press, then repeat while held.
-		boolean up = isDown(SCROLL_UP_KEY);
-		boolean down = isDown(SCROLL_DOWN_KEY);
-		int delta = 0;
-		if (up && !scrollUpHeld) {
-			delta -= 1;
+		// Copy/scroll are screen-only; drain any queued in-world presses so they don't pile up.
+		while (COPY_KEY.consumeClick()) {
 		}
-		if (down && !scrollDownHeld) {
-			delta += 1;
+		while (SCROLL_UP_KEY.consumeClick()) {
 		}
-		if (up ^ down) {
-			if (++scrollRepeat >= 6) {
-				scrollRepeat = 0;
-				delta += down ? 1 : -1;
-			}
-		} else {
-			scrollRepeat = 0;
+		while (SCROLL_DOWN_KEY.consumeClick()) {
 		}
-		scroll += delta; // clamped against the actual line count in onTooltip
-		scrollUpHeld = up;
-		scrollDownHeld = down;
 
 		// Reset each tick; the tooltip callback re-sets it every frame while hovering,
 		// so a copy only ever takes the item currently under the cursor.
@@ -159,7 +169,7 @@ public class NBTPeek implements ClientModInitializer {
 		return switch (cfg.trigger) {
 			case ADVANCED -> flag.isAdvanced();
 			case ALWAYS -> true;
-			case HOLD_KEY -> isDown(TOGGLE_KEY);
+			case HOLD_KEY -> TOGGLE_KEY.isDown();
 			case TOGGLE_KEY -> toggledOn;
 		};
 	}
@@ -211,10 +221,5 @@ public class NBTPeek implements ClientModInitializer {
 	private static Component hint(String key, int count) {
 		return Component.literal(ChatFormatting.DARK_GRAY + "… ")
 				.append(Component.translatable(key, count).withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
-	}
-
-	private static boolean isDown(KeyMapping mapping) {
-		return !mapping.isUnbound()
-				&& InputConstants.isKeyDown(KeyMappingHelper.getBoundKeyOf(mapping).getValue());
 	}
 }
