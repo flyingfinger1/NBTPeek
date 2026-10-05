@@ -46,6 +46,9 @@ public class NBTPeek implements ClientModInitializer {
 	/** The stack whose tooltip was drawn most recently — i.e. the one under the cursor. */
 	private static ItemStack lastHovered = ItemStack.EMPTY;
 
+	/** Edge-detection state for the copy key. Polled directly so it also fires while a screen is open. */
+	private static boolean copyKeyHeld = false;
+
 	@Override
 	public void onInitializeClient() {
 		KeyMappingHelper.registerKeyMapping(COPY_KEY);
@@ -68,16 +71,18 @@ public class NBTPeek implements ClientModInitializer {
 	}
 
 	private static void onEndTick(Minecraft mc) {
-		boolean handled = false;
-		// consumeClick() drains queued key presses; copy at most once per tick.
-		while (COPY_KEY.consumeClick()) {
-			if (!handled) {
-				handled = true;
-				if (mc.player != null && !lastHovered.isEmpty()) {
-					copyToClipboard(mc, lastHovered);
-				}
-			}
+		// Poll the bound key directly: KeyMapping.consumeClick() does not fire while a
+		// screen (inventory/container) is open, which is exactly when we want to copy.
+		boolean down = !COPY_KEY.isUnbound()
+				&& InputConstants.isKeyDown(KeyMappingHelper.getBoundKeyOf(COPY_KEY).getValue());
+		if (down && !copyKeyHeld && mc.player != null && !lastHovered.isEmpty()) {
+			copyToClipboard(mc, lastHovered); // the item whose tooltip is currently shown
 		}
+		copyKeyHeld = down;
+
+		// Reset each tick; the tooltip callback re-sets it every frame while an item is
+		// hovered, so a press only ever copies the item currently under the cursor.
+		lastHovered = ItemStack.EMPTY;
 	}
 
 	private static void copyToClipboard(Minecraft mc, ItemStack stack) {
