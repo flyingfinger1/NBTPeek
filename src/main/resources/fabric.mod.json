@@ -15,6 +15,9 @@
   "entrypoints": {
     "client": [
       "net.flyingfinger.nbtpeek.NBTPeek"
+    ],
+    "modmenu": [
+      "net.flyingfinger.nbtpeek.config.ConfigScreen"
     ]
   },
   "depends": {

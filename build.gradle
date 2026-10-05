@@ -8,11 +8,19 @@ version = project.mod_version
 group = project.maven_group
 
 base {
-	// Minecraft version in the jar name, e.g. nbtpeek-mc26.3-1.0.0.jar
+	// Minecraft version in the jar name, e.g. nbtpeek-mc26.3-1.1.0.jar
 	archivesName = "${project.archives_base_name}-mc${project.minecraft_version}"
 }
 
 repositories {
+	maven {
+		name = 'Mod Menu'
+		url = 'https://maven.terraformersmc.com/releases/'
+	}
+	maven {
+		name = 'Cloth Config'
+		url = 'https://maven.shedaniel.me/'
+	}
 }
 
 dependencies {
@@ -20,6 +28,16 @@ dependencies {
 
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+	// Optional in-game config screen. Mod Menu provides the entry point;
+	// Cloth Config builds the screen and is bundled into the jar.
+	implementation("com.terraformersmc:modmenu:${project.modmenu_version}") {
+		exclude module: 'fabric-api'
+	}
+	implementation("me.shedaniel.cloth:cloth-config-fabric:${project.clothconfig_version}") {
+		exclude module: 'fabric-api'
+	}
+	include "me.shedaniel.cloth:cloth-config-fabric:${project.clothconfig_version}"
 }
 
 processResources {

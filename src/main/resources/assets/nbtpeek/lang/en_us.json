@@ -1,7 +1,25 @@
 {
   "key.category.nbtpeek.general": "NBT Peek",
   "key.nbtpeek.copy": "Copy NBT to clipboard",
+  "key.nbtpeek.toggle": "Show / toggle NBT",
+  "key.nbtpeek.scroll_up": "Scroll NBT up",
+  "key.nbtpeek.scroll_down": "Scroll NBT down",
+
   "nbtpeek.header": "NBT",
+  "nbtpeek.more.above": "%s more above",
+  "nbtpeek.more.below": "%s more below",
   "nbtpeek.copied": "NBT copied to clipboard",
-  "nbtpeek.copied.empty": "This item has no NBT data"
+  "nbtpeek.copied.empty": "This item has no NBT data",
+
+  "nbtpeek.config.title": "NBT Peek",
+  "nbtpeek.config.general": "General",
+  "nbtpeek.config.trigger": "Show when",
+  "nbtpeek.config.trigger.tooltip": "ADVANCED = with advanced tooltips (F3 + H), ALWAYS = always, HOLD_KEY = while the Show key is held, TOGGLE_KEY = toggled by the Show key.",
+  "nbtpeek.config.style": "Display style",
+  "nbtpeek.config.style.tooltip": "FRIENDLY = coloured & indented, PLAIN = indented, no colour, COMPACT = raw SNBT.",
+  "nbtpeek.config.hideLore": "Hide lore component",
+  "nbtpeek.config.hideCustomName": "Hide custom name component",
+  "nbtpeek.config.showHeader": "Show the 'NBT' header line",
+  "nbtpeek.config.maxLines": "Max lines before scrolling",
+  "nbtpeek.config.maxLines.tooltip": "Longer data can be scrolled with the Scroll keys while hovering an item."
 }
