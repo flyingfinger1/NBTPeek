@@ -45,10 +45,10 @@ public class NBTPeek implements ClientModInitializer {
 	private static final KeyMapping.Category CATEGORY =
 			KeyMapping.Category.register(Identifier.fromNamespaceAndPath(MOD_ID, "general"));
 
-	private static final KeyMapping COPY_KEY = key("copy", InputConstants.KEY_C);
-	private static final KeyMapping TOGGLE_KEY = key("toggle", -1); // unbound by default
-	private static final KeyMapping SCROLL_UP_KEY = key("scroll_up", InputConstants.KEY_UP);
-	private static final KeyMapping SCROLL_DOWN_KEY = key("scroll_down", InputConstants.KEY_DOWN);
+	private static final KeyMapping COPY_KEY = key("copy", "key.keyboard.c");
+	private static final KeyMapping TOGGLE_KEY = key("toggle", "key.keyboard.unknown"); // unbound by default
+	private static final KeyMapping SCROLL_UP_KEY = key("scroll_up", "key.keyboard.up");
+	private static final KeyMapping SCROLL_DOWN_KEY = key("scroll_down", "key.keyboard.down");
 
 	/** The stack whose tooltip was drawn most recently — i.e. the one under the cursor. */
 	private static ItemStack lastHovered = ItemStack.EMPTY;
@@ -60,8 +60,13 @@ public class NBTPeek implements ClientModInitializer {
 	private static int copyCooldown = 0;   // ticks, debounces copy against key-repeat
 	private static int toggleCooldown = 0;
 
-	private static KeyMapping key(String name, int defaultCode) {
-		return new KeyMapping("key.nbtpeek." + name, InputConstants.Type.KEYBOARD, defaultCode, CATEGORY);
+	// Resolve the default key by its vanilla name (e.g. "key.keyboard.c"). On 26.x
+	// (SDL input) a KeyMapping's value must be a valid key as the game itself stores
+	// them; raw GLFW constants (InputConstants.KEY_*) are NOT valid scancodes and make
+	// vanilla's KeyMapping.setAll() -> InputConstants.isKeyDown() go out of bounds.
+	private static KeyMapping key(String name, String defaultKeyName) {
+		InputConstants.Key bound = InputConstants.getKey(defaultKeyName);
+		return new KeyMapping("key.nbtpeek." + name, InputConstants.Type.KEYBOARD, bound.getValue(), CATEGORY);
 	}
 
 	@Override
