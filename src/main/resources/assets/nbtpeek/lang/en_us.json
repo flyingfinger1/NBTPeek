@@ -1,0 +1,7 @@
+{
+  "key.category.nbtpeek.general": "NBT Peek",
+  "key.nbtpeek.copy": "Copy NBT to clipboard",
+  "nbtpeek.header": "NBT",
+  "nbtpeek.copied": "NBT copied to clipboard",
+  "nbtpeek.copied.empty": "This item has no NBT data"
+}

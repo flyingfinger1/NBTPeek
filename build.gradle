@@ -1,0 +1,58 @@
+plugins {
+	// Minecraft 26.1+ is unobfuscated: the non-remapping Loom plugin, no mappings.
+	id 'net.fabricmc.fabric-loom' version '1.17.12'
+	id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	// Minecraft version in the jar name, e.g. nbtpeek-mc26.3-1.0.0.jar
+	archivesName = "${project.archives_base_name}-mc${project.minecraft_version}"
+}
+
+repositories {
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+}
+
+processResources {
+	inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": project.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+}
+
+java {
+	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+jar {
+	from("LICENSE") {
+		rename { "${it}_${project.archives_base_name}" }
+	}
+}
+
+publishing {
+	publications {
+		create("mavenJava", MavenPublication) {
+			from components.java
+		}
+	}
+	repositories {
+	}
+}

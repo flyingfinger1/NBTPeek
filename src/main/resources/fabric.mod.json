@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "nbtpeek",
+  "version": "${version}",
+  "name": "NBT Peek",
+  "description": "Shows an item's NBT / data components in its tooltip and copies them to the clipboard.",
+  "authors": [
+    "flyingfinger1"
+  ],
+  "contact": {
+    "sources": "https://github.com/flyingfinger1/NBTPeek"
+  },
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "net.flyingfinger.nbtpeek.NBTPeek"
+    ]
+  },
+  "depends": {
+    "fabricloader": "*",
+    "fabric-api": "*",
+    "minecraft": ">=26.3",
+    "java": ">=25"
+  }
+}
