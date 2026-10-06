@@ -66,6 +66,8 @@ public class NBTPeek implements ClientModInitializer {
 	private static int scroll = 0;
 
 	private static boolean toggledOn = false;
+	/** Show/hold key currently held while a screen is open (HOLD_KEY trigger; isDown() is dead in screens). */
+	private static boolean showKeyHeld = false;
 	private static int copyCooldown = 0;   // ticks, debounces copy against key-repeat
 	private static int toggleCooldown = 0;
 
@@ -83,8 +85,12 @@ public class NBTPeek implements ClientModInitializer {
 		ItemTooltipCallback.EVENT.register(NBTPeek::onTooltip);
 		ClientTickEvents.END_CLIENT_TICK.register(NBTPeek::onEndTick);
 		// Keys while a screen (inventory/container) is open — the case we care about.
-		ScreenEvents.AFTER_INIT.register((client, screen, width, height) ->
-				ScreenKeyboardEvents.afterKeyPress(screen).register((s, keyEvent) -> onScreenKey(keyEvent)));
+		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
+			// Clear any stale hold state; a fresh press inside this screen re-establishes it.
+			showKeyHeld = false;
+			ScreenKeyboardEvents.afterKeyPress(screen).register((s, keyEvent) -> onScreenKey(keyEvent));
+			ScreenKeyboardEvents.afterKeyRelease(screen).register((s, keyEvent) -> onScreenKeyRelease(keyEvent));
+		});
 	}
 
 	private static void onTooltip(ItemStack stack, Item.TooltipContext context, TooltipFlag flag, List<Component> lines) {
@@ -114,21 +120,37 @@ public class NBTPeek implements ClientModInitializer {
 		}
 		int total = body.size();
 		int window = Math.max(1, cfg.maxLines);
-		int offset = Math.min(Math.max(scroll, 0), Math.max(0, total - window));
-		scroll = offset;
 
 		if (cfg.showHeader) {
-			lines.add(Component.translatable("nbtpeek.header").withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
+			lines.add(Component.translatable("nbtpeek.header").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD));
 		}
-		if (offset > 0) {
-			lines.add(hint("nbtpeek.more.above", offset));
+
+		if (total <= window) {
+			scroll = 0;
+			lines.addAll(body);
+			return;
 		}
-		int end = Math.min(total, offset + window);
-		for (int i = offset; i < end; i++) {
+
+		// Fixed-height window of exactly `window` lines. When content is hidden on a
+		// side, that side's edge line becomes the "N more" indicator. Since the
+		// indicator also stands in for the line it replaces, it always covers at least
+		// two lines — so the pointless "1 more" step is skipped and the number of shown
+		// lines never changes as you scroll.
+		int v = Math.min(Math.max(scroll, 0), total - window);
+		scroll = v;
+		boolean moreAbove = v > 0;
+		boolean moreBelow = v + window < total;
+		int startContent = v + (moreAbove ? 1 : 0);
+		int endContent = (v + window) - (moreBelow ? 1 : 0);
+
+		if (moreAbove) {
+			lines.add(hint("nbtpeek.more.above", startContent)); // body[0..startContent) hidden above
+		}
+		for (int i = startContent; i < endContent; i++) {
 			lines.add(body.get(i));
 		}
-		if (end < total) {
-			lines.add(hint("nbtpeek.more.below", total - end));
+		if (moreBelow) {
+			lines.add(hint("nbtpeek.more.below", total - endContent));
 		}
 	}
 
@@ -145,9 +167,19 @@ public class NBTPeek implements ClientModInitializer {
 			scroll = Math.max(0, scroll - 1);
 		} else if (SCROLL_DOWN_KEY.matches(pressed)) {
 			scroll += 1; // clamped against the line count in onTooltip
-		} else if (TOGGLE_KEY.matches(pressed) && toggleCooldown == 0) {
-			toggledOn = !toggledOn;
-			toggleCooldown = 5;
+		} else if (TOGGLE_KEY.matches(pressed)) {
+			showKeyHeld = true;            // HOLD_KEY trigger — stays true until the key is released
+			if (toggleCooldown == 0) {     // TOGGLE_KEY trigger — flip once per press (debounced)
+				toggledOn = !toggledOn;
+				toggleCooldown = 5;
+			}
+		}
+	}
+
+	/** Clears the hold state when the show/hold key is released inside a screen. */
+	private static void onScreenKeyRelease(KeyEvent event) {
+		if (TOGGLE_KEY.matches(InputConstants.getKey(event))) {
+			showKeyHeld = false;
 		}
 	}
 
@@ -179,7 +211,7 @@ public class NBTPeek implements ClientModInitializer {
 		return switch (cfg.trigger) {
 			case ADVANCED -> flag.isAdvanced();
 			case ALWAYS -> true;
-			case HOLD_KEY -> TOGGLE_KEY.isDown();
+			case HOLD_KEY -> showKeyHeld || TOGGLE_KEY.isDown(); // screen-tracked, plus in-world fallback
 			case TOGGLE_KEY -> toggledOn;
 		};
 	}
