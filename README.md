@@ -8,10 +8,10 @@ This is an **original, clean implementation** (not derived from any other mod's 
 - Shows an item's data components in the tooltip, with configurable **trigger**:
   advanced tooltips (**F3 + H**), always, while a key is held, or toggled by a key.
 - Three **display styles**: *pretty* (coloured & indented), *plain*, or *compact* (raw SNBT).
-- **Copy** the hovered item's NBT to the clipboard — as compact **SNBT** (paste into `/give …[…]`) or as **pretty-printed** multi-line text, selectable in the config.
+- **Copy** the hovered item's NBT to the clipboard as compact **SNBT** (paste into `/give …[…]`) or as **pretty-printed** multi-line text, selectable in the config.
 - **Scroll** long data with the scroll keys instead of flooding the screen.
 - Optionally **hide** the lore / custom-name components, and the header line.
-- In-game config via **Mod Menu** (Cloth Config is bundled) — or edit `config/nbtpeek.json`.
+- In-game config via **Mod Menu** (Cloth Config is bundled) or edit `config/nbtpeek.json`.
 
 ## Keybinds (rebindable under Controls → *NBT Peek*)
 | Action | Default |
