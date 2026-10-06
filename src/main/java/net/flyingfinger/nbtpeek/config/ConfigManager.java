@@ -57,7 +57,7 @@ public final class ConfigManager {
 			config.trigger = NbtPeekConfig.Trigger.ADVANCED;
 		}
 		if (config.style == null) {
-			config.style = NbtPeekConfig.Style.FRIENDLY;
+			config.style = NbtPeekConfig.Style.PRETTY;
 		}
 		if (config.copyFormat == null) {
 			config.copyFormat = NbtPeekConfig.CopyFormat.SNBT;

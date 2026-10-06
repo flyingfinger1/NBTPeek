@@ -33,7 +33,7 @@ public class ConfigScreen implements ModMenuApi {
 
 			general.addEntry(eb.startEnumSelector(Component.translatable("nbtpeek.config.style"),
 							NbtPeekConfig.Style.class, cfg.style)
-					.setDefaultValue(NbtPeekConfig.Style.FRIENDLY)
+					.setDefaultValue(NbtPeekConfig.Style.PRETTY)
 					.setTooltip(Component.translatable("nbtpeek.config.style.tooltip"))
 					.setSaveConsumer(value -> cfg.style = value)
 					.build());

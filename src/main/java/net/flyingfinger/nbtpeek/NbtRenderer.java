@@ -7,6 +7,8 @@ import net.flyingfinger.nbtpeek.config.NbtPeekConfig.Style;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CollectionTag;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NumericTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 
@@ -39,7 +41,7 @@ public final class NbtRenderer {
 				out.add(Component.literal(snbt.substring(i, Math.min(snbt.length(), i + COMPACT_WRAP))));
 			}
 		} else {
-			append(out, "", null, tag, style == Style.FRIENDLY);
+			append(out, "", null, tag, style == Style.PRETTY);
 		}
 		return out;
 	}
@@ -61,8 +63,20 @@ public final class NbtRenderer {
 			}
 			out.add(Component.literal(indent + brace + "]"));
 		} else {
-			String value = colored ? ChatFormatting.WHITE + String.valueOf(tag) : String.valueOf(tag);
+			String text = String.valueOf(tag);
+			String value = colored ? valueColor(tag) + text : text;
 			out.add(Component.literal(indent + label + value));
 		}
+	}
+
+	/** Highlights the data itself: strings green, numbers gold, everything else white. */
+	private static ChatFormatting valueColor(Tag tag) {
+		if (tag instanceof StringTag) {
+			return ChatFormatting.GREEN;
+		}
+		if (tag instanceof NumericTag) {
+			return ChatFormatting.GOLD;
+		}
+		return ChatFormatting.WHITE;
 	}
 }
