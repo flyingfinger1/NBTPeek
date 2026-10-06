@@ -29,7 +29,7 @@ jobs:
       - name: publish to Modrinth + attach to release
         uses: Kir-Antipov/mc-publish@v3.3
         with:
-          modrinth-id: nbt-peek
+          modrinth-id: nbtpeek
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           files: build/libs/!(*-sources).jar
