@@ -11,6 +11,7 @@
     "sources": "https://github.com/flyingfinger1/NBTPeek"
   },
   "license": "MIT",
+  "icon": "assets/nbtpeek/icon.png",
   "environment": "client",
   "entrypoints": {
     "client": [
